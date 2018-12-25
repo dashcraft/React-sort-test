@@ -1,8 +1,9 @@
 import React, { Component } from 'react';
-import { Table } from 'reactstrap';
 import axios from 'axios';
-import _ from 'lodash';
 import './App.css';
+import SortedTable from './components/table';
+import SearchBar from './components/search';
+import { Container } from 'semantic-ui-react';
 
 class App extends Component {
 
@@ -15,59 +16,40 @@ class App extends Component {
   }
 
   componentDidMount() {
+    this.setState({tableLoading : true});
     axios.get('https://jsonplaceholder.typicode.com/todos').then(response => {
       console.log(response);
       this.setState({
-        todos: response.data
+        todos: response.data,
+        tableLoading: false
       });
     });
   }
 
-  sort() {
-    let input = document.getElementById('input').innerHTML;
+  _triggerSearch= (e, { value }) =>{
+    this.setState({loading:true});
+    setTimeout(()=>{
+      this.setState({ filter: value, loading: false })
 
-    this.setState.response = _.sortBy(this.state.response, input);
+    } , 500)
+   
   }
 
   render() {
 
-    const { todos = [] } = this.state;
+    const { todos, filter, loading, tableLoading } = this.state;
+    let tableData = todos;
+    if(filter){
+      tableData = todos.filter((item)=>{
+        return item.title.replace(" ","").includes(filter);
+      })
+    }
     return (
-      <div className="App">
-        <header className="App-header">
-          <input id="input" type="textbox" placeholder="search from here" onKeyDown={this.sort()}></input>
-
-          <Table responsive>
-            <thead>
-              <tr>
-                <th>User ID</th>
-                <th>ID</th>
-                <th>Title</th>
-                <th>Completed</th>
-              </tr>
-            </thead>
-            <tbody>
-              {todos.length ?
-                todos.map(todo => (
-                  <tr>
-                    <td>{todo.userId}</td>
-                    <td>{todo.id}</td>
-                    <td>{todo.title}</td>
-                    <td><input type="checkbox" checked={todo.completed}></input></td>
-                  </tr>
-                ))
-                :
-                (<tr>
-                  <td>-</td>
-                  <td>-</td>
-                  <td>-</td>
-                  <td>-</td>
-                </tr>)
-              }
-            </tbody>
-          </Table>
-        </header>
-      </div>
+      <Container fluid className="App">
+          <SearchBar loading={loading} onChange={this._triggerSearch}/>
+          <SortedTable todos={tableData} loading={tableLoading}/>
+         
+      </Container>
     );
   }
 }
